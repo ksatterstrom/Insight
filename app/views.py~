@@ -1,0 +1,67 @@
+import os
+from flask import render_template, request, Flask, redirect, url_for
+from app import app
+from werkzeug import secure_filename
+from a_Model import ModelIt
+from numpy import genfromtxt
+
+# This is new
+UPLOAD_FOLDER = './app/upload/'
+ALLOWED_EXTENSIONS = set(['csv'])
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+# This is old
+#@app.route('/')
+#@app.route('/index')
+#def cities_input():
+#    return render_template("index.html")
+
+# This is Greg's
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # drug_sensitivity = drug_model(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+	    
+    	    CNV_input = genfromtxt(open(os.path.join(app.config['UPLOAD_FOLDER'], filename),'r'), delimiter=',', dtype='f8')
+   	    the_result = ModelIt(CNV_input)
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+	    return render_template("output.html", the_result = the_result)
+    return render_template("index.html")
+
+# To be deleted
+#@app.route('/output')
+#def create_output():
+#  CNV_input_file = request.args.get('input-CNV')
+#  CNV_input = genfromtxt(open(CNV_input_file,'r'), delimiter=',', dtype='f8')
+#  
+#  the_result = ModelIt(CNV_input)
+#  return render_template("output.html", the_result = the_result)
+
+#@app.route('/output')
+#def create_output():
+#  CNV_input_file = request.args.get('input-CNV')
+#  CNV_input = genfromtxt(open(CNV_input_file,'r'), delimiter=',', dtype='f8')
+#  
+#  the_result = ModelIt(CNV_input)
+#  return render_template("output.html", the_result = the_result)
+
+# This is Greg's
+#@app.route('/output')
+#def cities_output():
+#  return render_template("output.html")
+
+@app.route('/basic')
+def basic():
+    return render_template("basic.html",
+        title = 'Home', user = { 'nickname': 'Kyle' },
+        )
